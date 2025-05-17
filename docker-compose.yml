@@ -1,0 +1,91 @@
+
+
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: server
+    env_file:
+      - ./server/.env
+    ports:
+      - "8001:8001"
+    command: npm start
+    networks:
+      - app-network
+    depends_on:
+      - redis
+      - qdrant
+      - mongodb
+
+  worker:
+    build:
+      context: ./server
+    container_name: app_worker
+    command: npm run dev:worker
+    env_file:
+      - ./server/.env
+    volumes:
+      - ./server:/app
+    restart: always
+    networks:
+      - app-network
+    depends_on:
+      - redis
+      - qdrant
+      
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./client/.env
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: app_qdrant
+    ports:
+      - "6333:6333"
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    volumes:
+      - data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+
+volumes:
+  data:
+
+
+networks:
+  app-network:
+    driver: bridge
