@@ -2,18 +2,18 @@ import connectDB from "./database/db.js";
 import dotenv from "dotenv";
 import cluster from "node:cluster";
 import { httpServer } from "./app.js";
-import os from "node:os";
+import {availableParallelism} from "node:os";
 import logger from "./logger/wiston.logger.js";
 
-const totalCpu = os.cpus().length;
 
+const maxCore= availableParallelism()
 dotenv.config({
   path: "./.env",
 });
 if (cluster.isPrimary) {
   logger.info(`Primary process ${process.pid} running!!!`);
   //building workers
-  for (let i = 0; i < totalCpu; i++) {
+  for (let i = 0; i < maxCore; i++) {
     cluster.fork();
   }
 

@@ -25,8 +25,8 @@ app.use(requestIp.mw());
 // Rate limiter to avoid misuse of the service and avoid cost spikes
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: (req, res) => 100, // replaces deprecated `max`
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  limit: (req, res) => 20, // replaces deprecated `max`
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => req.clientIp,
