@@ -27,7 +27,7 @@ const chatSectionHandling = asyncHandler(async (req, res) => {
     }
   );
 
-  const retriever = vectorStore.asRetriever({ k: 2 });
+  const retriever = vectorStore.asRetriever({ k: 20});
   const result = await retriever.invoke(userQuery);
 
   const SYSTEM_PROMPT = `
@@ -50,4 +50,4 @@ ${JSON.stringify(result)}
     docs: result,
   });
 });
-export { chatSectionHandling }; 
+export { chatSectionHandling };

@@ -45,6 +45,53 @@ const CopyButton: React.FC<CopyButtonProps> = ({ content }) => {
         <div className="bg-slate-600 text-white rounded-md px-2 py-1 text-xs flex items-center">
           <span className="mr-1">✅</span> Copied!
         </div>
+// In this code there is source that is given by LLM model so if you want source (pagenumber and pages where LLM use refrences)than uncomment and use this code 
+/*'use client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import * as React from 'react';
+import { Copy } from 'lucide-react';
+
+interface Doc {
+  pageContent?: string;
+  metadata?: {
+    loc?: { pageNumber?: number };
+    source?: string;
+  };
+}
+
+interface IMessage {
+  role: 'assistant' | 'user';
+  content?: string;
+  documents?: Doc[];
+  expanded?: boolean;
+}
+
+interface CopyButtonProps {
+  content: string;
+}
+
+const CopyButton: React.FC<CopyButtonProps> = ({ content }) => {
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-gray-400 hover:text-slate-300 text-xs flex items-center"
+      title="Copy to clipboard"
+    >
+      {copied ? (
+        <div className="bg-slate-600 text-white rounded-md px-2 py-1 text-xs flex items-center">
+          <span className="mr-1">✅</span> Copied!
+        </div>
       ) : (
         <Copy className="w-4 h-4" />
       )}
@@ -286,7 +333,7 @@ const ChatComponent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen p-6 bg-slate-800">
+    <div className="flex flex-col h-screen p-6 bg-slate-780">
       <div className="flex-1 overflow-y-auto pr-4 space-y-6 custom-scroll">
         {messages.map((msg, index) => {
           const isAssistant = msg.role === 'assistant';
@@ -382,4 +429,3 @@ const ChatComponent: React.FC = () => {
 };
 
 export default ChatComponent;
-

@@ -40,6 +40,7 @@ async function extractTextFromPDF(url) {
 
 const uploadPdf = asyncHandler(async (req, res) => {
   const fileMimeType = req.file?.mimetype;
+  res.header("content-type", "application/pdf")
   if (!fileMimeType || fileMimeType !== "application/pdf") {
     throw new ApiError(400, "Invalid file type. Only PDFs are allowed.");
   }

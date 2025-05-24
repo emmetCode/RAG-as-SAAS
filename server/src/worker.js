@@ -4,6 +4,7 @@ import { QdrantVectorStore } from "@langchain/qdrant";
 import * as dotenv from "dotenv";
 import { ApiError } from "./utils/ApiError.js";
 import logger from "./logger/wiston.logger.js";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
 dotenv.config({ path: "./.env" });
 
@@ -22,11 +23,13 @@ const worker = new Worker(
       throw new ApiError(400, "PDF text is empty or couldn't be parsed", []);
     }
 
-    const docs = [
-      {
-        pageContent: fullText,
-      },
-    ];
+    // Chunk the document using RecursiveCharacterTextSplitter
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1100,
+      chunkOverlap: 130,
+    });
+    const docs = await splitter.createDocuments([fullText]);
+console.log(docs);
 
     // Initialize Cohere embeddings
     const embeddings = new CohereEmbeddings({
@@ -34,7 +37,7 @@ const worker = new Worker(
       model: "embed-english-v3.0",
     });
 
-    // Store in Qdrant (no chunking)
+    // Store in Qdrant (with chunking)
     const vectorStore = await QdrantVectorStore.fromDocuments(
       docs,
       embeddings,
