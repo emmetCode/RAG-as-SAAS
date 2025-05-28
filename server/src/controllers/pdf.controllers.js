@@ -1,19 +1,65 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { Pdf } from "../models/pdf.models.js";
+import { uploadOnCloudinary } from "../services/cloudinary.services.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { uploadOnCloudinary } from "../services/cloudinary.services.js";
 import { Queue } from "bullmq";
-import axios from "axios";
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
+import mammoth from "mammoth";
+import axios from "axios";
+import { Pdf } from "../models/pdf.models.js";
+import path from "path";
 
 const queue = new Queue("file-upload-queue", {
   connection: {
-url:"redis://redis:6379"
+    url: "redis://redis:6379",
   },
 });
 
-// Helper: extract text from Cloudinary PDF
+// OCR.Space API key from environment variable
+const OCR_SPACE_API_KEY = process.env.OCR_SPACE_API_KEY;
+
+// Use OCR.Space API to extract text from image URL
+async function extractTextFromOCRSpace(url) {
+  if (!OCR_SPACE_API_KEY) {
+    throw new ApiError(500, "OCR.Space API key missing");
+  }
+
+  const formData = new URLSearchParams();
+  formData.append("url", url);
+  formData.append("apikey", OCR_SPACE_API_KEY);
+  formData.append("OCREngine", "2");
+
+  formData.append("language", "eng");
+  formData.append("isOverlayRequired", "false");
+  formData.append("iscreatesearchablepdf", "true");
+
+  const response = await axios.post(
+    "https://api.ocr.space/parse/image",
+    formData.toString(),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      timeout: 20000, // 20 seconds timeout
+    }
+  );
+  console.log(response.data);
+
+  if (!response.data || response.data.IsErroredOnProcessing) {
+    throw new ApiError(
+      500,
+      "OCR.Space processing failed: " +
+        (response.data.ErrorMessage || "Unknown error")
+    );
+  }
+
+  const parsedText = response.data.ParsedResults?.[0]?.ParsedText || "";
+  return parsedText
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
 async function extractTextFromPDF(url) {
   try {
     const response = await axios.get(url, {
@@ -38,53 +84,98 @@ async function extractTextFromPDF(url) {
   }
 }
 
-const uploadPdf = asyncHandler(async (req, res) => {
-  const fileMimeType = req.file?.mimetype;
-  res.header("content-type", "application/pdf")
-  if (!fileMimeType || fileMimeType !== "application/pdf") {
-    throw new ApiError(400, "Invalid file type. Only PDFs are allowed.");
+const extractTextFromDocx = async (url) => {
+  // Download docx file buffer from URL
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  const buffer = Buffer.from(response.data);
+
+  const result = await mammoth.extractRawText({ buffer });
+  return result.value
+    .split("\n\n")
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+};
+
+const extractTextFromImage = async (url) => {
+  // Use OCR.Space on Image URL
+  return extractTextFromOCRSpace(url);
+};
+
+const extractTextFromFile = async (file, url) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ext === ".pdf") return extractTextFromPDF(url);
+  if (ext === ".docx") return extractTextFromDocx(url);
+  if ([".png", ".jpg", ".jpeg"].includes(ext)) return extractTextFromImage(url);
+  throw new ApiError(415, `Unsupported file type: ${ext}`);
+};
+
+const uploadMultiFileRAG = asyncHandler(async (req, res) => {
+  const files = req.files;
+
+  if (!files || files.length === 0) {
+    throw new ApiError(400, "No files uploaded.");
   }
 
-  const localPath = req.file?.path;
-  if (!localPath) {
-    throw new ApiError(400, "PDF file is missing!", []);
-  }
+  const results = [];
 
-  // Step 1: Upload to Cloudinary
-  const pdfFile = await uploadOnCloudinary(localPath);
-  if (!pdfFile) {
-    throw new ApiError(500, "PDF upload failed", []);
-  }
-
-  // Step 2: Save PDF metadata to DB
-  const pdfDoc = await Pdf.create({
-    pdfUrl: pdfFile.secure_url,
-  });
-  if (!pdfDoc) {
-    throw new ApiError(400, "Failed to save PDF info to DB", []);
-  }
-
-  // Step 3: Extract text from PDF (Cloudinary URL)
-  const pdfText = await extractTextFromPDF(pdfFile.secure_url);
-
-  await queue.add(
-    "file-ready",
-    {
-      originalFilename: req.file?.originalname,
-      pdftext: pdfText, // <-- now passing extracted text
-    },
-    {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5000,
-      },
+  for (const file of files) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (![".pdf", ".docx", ".png", ".jpg", ".jpeg"].includes(ext)) {
+      results.push({
+        filename: file.originalname,
+        status: "failed",
+        error: "Unsupported file format",
+      });
+      continue;
     }
-  );
+
+    try {
+      const uploadResult = await uploadOnCloudinary(file.path);
+      const pdfDoc = await Pdf.create({
+        pdfUrls: [uploadResult.secure_url], // array of URLs even if just one PDF
+      });
+
+      if (!pdfDoc) {
+        throw new ApiError(400, "Failed to save PDF info to DB", []);
+      }
+      const extractedText = await extractTextFromFile(
+        file,
+        uploadResult.secure_url
+      );
+      console.log(extractedText);
+
+      await queue.add(
+        "file-ready",
+        {
+          originalFilename: file.originalname,
+          textChunks: extractedText,
+          fileUrl: uploadResult.secure_url,
+        },
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+        }
+      );
+
+      results.push({
+        filename: file.originalname,
+        status: "success",
+        cloudinaryUrl: uploadResult.secure_url,
+      });
+    } catch (err) {
+      results.push({
+        filename: file.originalname,
+        status: "failed",
+        error: err.message,
+      });
+    }
+  }
 
   return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Successfully uploaded and queued PDF!"));
+    .status(207)
+    .json(
+      new ApiResponse(207, { results }, "Multi-format file upload processed")
+    );
 });
 
-export { uploadPdf };
+export { uploadMultiFileRAG };

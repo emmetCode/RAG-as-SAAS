@@ -11,58 +11,62 @@ dotenv.config({ path: "./.env" });
 const worker = new Worker(
   "file-upload-queue",
   async (job) => {
-    const { pdftext } = job.data;
+    const { textChunks, originalFilename } = job.data;
 
-    if (!pdftext || pdftext.length === 0) {
-      throw new ApiError(400, "Text is missing", []);
+    if (!textChunks || textChunks.length === 0) {
+      throw new ApiError(400, "No text found in file", []);
     }
 
-    const fullText = pdftext.join(" ").trim();
+    const fullText = textChunks.join(" ").trim();
 
     if (!fullText) {
-      throw new ApiError(400, "PDF text is empty or couldn't be parsed", []);
+      throw new ApiError(400, "Extracted text is empty or invalid", []);
     }
 
-    // Chunk the document using RecursiveCharacterTextSplitter
+    // 1. Chunk the document
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1100,
       chunkOverlap: 130,
     });
-    const docs = await splitter.createDocuments([fullText]);
-console.log(docs);
 
-    // Initialize Cohere embeddings
+    const docs = await splitter.createDocuments(
+      [fullText],
+      [
+        {
+          metadata: {
+            source: originalFilename || "unknown",
+          },
+        },
+      ]
+    );
+
+    // 2. Create Embeddings
     const embeddings = new CohereEmbeddings({
       apiKey: process.env.COHERE_API_KEY,
       model: "embed-english-v3.0",
     });
 
-    // Store in Qdrant (with chunking)
-    const vectorStore = await QdrantVectorStore.fromDocuments(
-      docs,
-      embeddings,
-      {
-        url: "http://qdrant:6333",
-        collectionName: "ragapp",
-      }
-    );
+    // 3. Store in Qdrant
+    await QdrantVectorStore.fromDocuments(docs, embeddings, {
+      url: "http://qdrant:6333",
+      collectionName: "ragapp",
+    });
 
-    logger.info("✅ Document added to vector store");
+    logger.info(`✅ ${originalFilename || "Document"} added to vector store`);
   },
   {
-    concurrency: 10, // safer default for production
+    concurrency: 10,
     connection: {
-  url:"redis://redis:6379"
+      url: "redis://redis:6379",
     },
   }
 );
 
-// Log job completion
+// Event listeners
 worker.on("completed", (job) => {
   logger.info(`🎉 Job ${job.id} completed successfully`);
 });
 
-// Log job failure
 worker.on("failed", (job, err) => {
   logger.error(`🔥 Job ${job.id} failed: ${err.message}`, {
     stack: err.stack,

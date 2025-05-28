@@ -16,8 +16,8 @@ app.use(
   })
 );
 app.use(helmet());
-app.use(express.json({ limit: "18kb" }));
-app.use(express.urlencoded({ extended: true, limit: "18kb" }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(express.static("uploads"));
 
 app.use(requestIp.mw());
@@ -50,7 +50,7 @@ import pdfRouter from "./routes/pdf.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 
 //route declaration
-app.use("/ap1/v1/upload", limiter, pdfRouter);
+app.use("/ap1/v1/uploads", limiter, pdfRouter);
 app.use("/ap1/v1", chatRouter);
 
 export { httpServer };

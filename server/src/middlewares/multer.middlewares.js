@@ -1,22 +1,33 @@
 import multer from "multer";
 
+// Allowed MIME types
+const allowedMimeTypes = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+  "text/plain", // .txt
+  "text/csv", // .csv
+  "image/jpeg",
+  "image/png",
+];
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "./uploads");
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    const uniqueName = `${Date.now()}-${file.originalname}`;
+    cb(null, uniqueName);
   },
 });
 
 export const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 5 * 1024 * 1024, // 5MB max per file
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype !== "application/pdf") {
-      return cb(new Error("Only PDF files are allowed"));
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      return cb(new Error("Unsupported file type"));
     }
     cb(null, true);
   },
