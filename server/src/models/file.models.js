@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-const pdfSchema = new mongoose.Schema(
+const fileSchema = new mongoose.Schema(
   {
-    pdfUrls: [
+    Urls: [
       {
         type: String,
         required: true,
@@ -11,4 +11,4 @@ const pdfSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Pdf = mongoose.model("pdf", pdfSchema);
+export const FILE = mongoose.model("file", fileSchema);

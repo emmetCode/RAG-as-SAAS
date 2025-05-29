@@ -6,7 +6,7 @@ import { Queue } from "bullmq";
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
 import axios from "axios";
-import { Pdf } from "../models/pdf.models.js";
+import { FILE } from "../models/file.models.js";
 import path from "path";
 
 const queue = new Queue("file-upload-queue", {
@@ -43,7 +43,6 @@ async function extractTextFromOCRSpace(url) {
       timeout: 20000, // 20 seconds timeout
     }
   );
-  console.log(response.data);
 
   if (!response.data || response.data.IsErroredOnProcessing) {
     throw new ApiError(
@@ -59,8 +58,19 @@ async function extractTextFromOCRSpace(url) {
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 }
+const extractTextFromTxt = async (url) => {
+  try {
+    const response = await axios.get(url, { responseType: "text" });
+    return response.data
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+  } catch (err) {
+    throw new ApiError(500, "Failed to extract text ", [err.message]);
+  }
+};
 
-async function extractTextFromPDF(url) {
+const extractTextFromPDF = async (url) => {
   try {
     const response = await axios.get(url, {
       responseType: "stream",
@@ -82,18 +92,25 @@ async function extractTextFromPDF(url) {
   } catch (err) {
     throw new ApiError(500, "Failed to extract text from PDF", [err.message]);
   }
-}
+};
 
 const extractTextFromDocx = async (url) => {
-  // Download docx file buffer from URL
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-  const buffer = Buffer.from(response.data);
+  try {
+    // Download docx file buffer from URL
+    const response = await axios.get(url, {
+      responseType: "arraybuffer",
+      timeout: 10000,
+    });
+    const buffer = Buffer.from(response.data);
 
-  const result = await mammoth.extractRawText({ buffer });
-  return result.value
-    .split("\n\n")
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0);
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value
+      .split("\n\n")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+  } catch (error) {
+    throw new ApiError(500, "Failed to extract text from Docx", [err.message]);
+  }
 };
 
 const extractTextFromImage = async (url) => {
@@ -103,10 +120,32 @@ const extractTextFromImage = async (url) => {
 
 const extractTextFromFile = async (file, url) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  if (ext === ".pdf") return extractTextFromPDF(url);
-  if (ext === ".docx") return extractTextFromDocx(url);
-  if ([".png", ".jpg", ".jpeg"].includes(ext)) return extractTextFromImage(url);
-  throw new ApiError(415, `Unsupported file type: ${ext}`);
+  let extractedText;
+
+  switch (ext) {
+    case ".pdf":
+      extractedText = await extractTextFromPDF(url);
+      break;
+
+    case ".docx":
+      extractedText = await extractTextFromDocx(url);
+      break;
+
+    case ".txt":
+      extractedText = await extractTextFromTxt(url);
+      break;
+
+    case ".png":
+    case ".jpg":
+    case ".jpeg":
+      extractedText = await extractTextFromImage(url);
+      break;
+
+    default:
+      throw new ApiError(415, `Unsupported file type: ${ext}`);
+  }
+
+  return extractedText;
 };
 
 const uploadMultiFileRAG = asyncHandler(async (req, res) => {
@@ -120,7 +159,7 @@ const uploadMultiFileRAG = asyncHandler(async (req, res) => {
 
   for (const file of files) {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (![".pdf", ".docx", ".png", ".jpg", ".jpeg"].includes(ext)) {
+    if (![".pdf", ".docx", ".png", ".jpg", ".jpeg", ".txt"].includes(ext)) {
       results.push({
         filename: file.originalname,
         status: "failed",
@@ -131,18 +170,17 @@ const uploadMultiFileRAG = asyncHandler(async (req, res) => {
 
     try {
       const uploadResult = await uploadOnCloudinary(file.path);
-      const pdfDoc = await Pdf.create({
-        pdfUrls: [uploadResult.secure_url], // array of URLs even if just one PDF
+      const fileDoc = await FILE.create({
+        Urls: [uploadResult.secure_url], // array of URLs even if just one PDF
       });
 
-      if (!pdfDoc) {
+      if (!fileDoc) {
         throw new ApiError(400, "Failed to save PDF info to DB", []);
       }
       const extractedText = await extractTextFromFile(
         file,
         uploadResult.secure_url
       );
-      console.log(extractedText);
 
       await queue.add(
         "file-ready",

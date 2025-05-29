@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { uploadMultiFileRAG } from "../controllers/pdf.controllers.js";
+import { uploadMultiFileRAG } from "../controllers/file.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 
 const router = Router();

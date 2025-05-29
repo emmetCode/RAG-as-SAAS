@@ -8,6 +8,7 @@ const allowedMimeTypes = [
   "text/csv", // .csv
   "image/jpeg",
   "image/png",
+  "image/jpg",
 ];
 
 const storage = multer.diskStorage({
