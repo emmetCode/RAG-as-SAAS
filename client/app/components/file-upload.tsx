@@ -115,7 +115,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
       if (!supportedTypes.includes(file.type)) {
         setUploadStatus({
           state: "error",
-          message: "Supported formats: PDF, DOCX, JPEG, PNG",
+          message: "Supported formats: PDF, DOCX, JPEG, PNG,TXT",
         });
         return;
       }
@@ -123,7 +123,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
       if (file.size > 5 * 1024 * 1024) {
         setUploadStatus({
           state: "error",
-          message: "One or more files exceed the 25MB limit",
+          message: "One or more files exceed the 5MB limit",
         });
         return;
       }
@@ -227,7 +227,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
       </div>
 
       <p className="text-sm text-gray-500">
-        Supported files: PDF, DOCX, JPEG, PNG (Max size: 25MB each)
+        Supported files: PDF, DOCX, JPEG, PNG (Max size: 5MB each)
       </p>
 
       {uploadStatus.state !== "idle" && (
@@ -350,7 +350,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
       <input
         type="file"
         ref={fileInputRef}
-        accept=".pdf,.docx,.jpeg,.jpg,.png"
+        accept=".pdf,.docx,.jpeg,.jpg,.png,.txt,.csv"
         multiple // ✅ Enable multiple file input
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
         className="hidden"
