@@ -1,44 +1,16 @@
-"use client";
+'use client';
+import React from "react";
+
+import { Upload, Loader2, CheckCircle, XCircle, Check, Database, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Upload,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  HardDrive,
-  Database,
-  Check,
-} from "lucide-react";
-import * as React from "react";
 
-interface UploadStatus {
-  state:
-    | "idle"
-    | "uploading"
-    | "processing"
-    | "embedding"
-    | "storing"
-    | "success"
-    | "error";
-  message?: string;
-  progress?: number;
-}
-
-interface DocumentUploadProps {
-  onUploadSuccess?: () => void;
-}
-
-const FileUploadComponent: React.FC<DocumentUploadProps> = ({
-  onUploadSuccess,
-}) => {
+const FileUploadComponent = ({ onUploadSuccess }) => {
   const [dragActive, setDragActive] = React.useState(false);
   const [documentTitle, setDocumentTitle] = React.useState("");
-  const [uploadStatus, setUploadStatus] = React.useState<UploadStatus>({
-    state: "idle",
-  });
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadStatus, setUploadStatus] = React.useState({ state: "idle" });
+  const fileInputRef = React.useRef(null);
 
-  const handleDrag = (e: React.DragEvent) => {
+  const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -48,7 +20,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -62,41 +34,17 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
   };
 
   const simulateProcessingSteps = () => {
-    setTimeout(
-      () =>
-        setUploadStatus({
-          state: "processing",
-          message: "Processing document...",
-        }),
-      1000
-    );
-    setTimeout(
-      () =>
-        setUploadStatus({
-          state: "embedding",
-          message: "Creating vector embeddings...",
-        }),
-      2400
-    );
-    setTimeout(
-      () =>
-        setUploadStatus({
-          state: "storing",
-          message: "Storing in database...",
-        }),
-      3800
-    );
+    setTimeout(() => setUploadStatus({ state: "processing", message: "Processing document..." }), 1000);
+    setTimeout(() => setUploadStatus({ state: "embedding", message: "Creating vector embeddings..." }), 2400);
+    setTimeout(() => setUploadStatus({ state: "storing", message: "Storing in database..." }), 3800);
     setTimeout(() => {
-      setUploadStatus({
-        state: "success",
-        message: "Document uploaded successfully!",
-      });
+      setUploadStatus({ state: "success", message: "Document uploaded successfully!" });
       onUploadSuccess?.();
       setTimeout(() => setUploadStatus({ state: "idle" }), 1300);
     }, 5200);
   };
 
-  const handleFiles = async (files: FileList) => {
+  const handleFiles = async (files) => {
     if (!files || files.length === 0) return;
     setUploadStatus({ state: "idle" });
 
@@ -105,8 +53,8 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "image/jpeg",
       "image/png",
-      "text/plain", // .txt
-      "text/csv", //.csv
+      "text/plain",
+      "text/csv",
     ];
 
     const formData = new FormData();
@@ -115,7 +63,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
       if (!supportedTypes.includes(file.type)) {
         setUploadStatus({
           state: "error",
-          message: "Supported formats: PDF, DOCX, JPEG, PNG,TXT",
+          message: "Supported formats: PDF, DOCX, JPEG, PNG, TXT",
         });
         return;
       }
@@ -128,7 +76,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
         return;
       }
 
-      formData.append("uploads", file); // ✅ multiple files with same field
+      formData.append("uploads", file);
     }
 
     if (documentTitle) {
@@ -136,11 +84,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
     }
 
     try {
-      setUploadStatus({
-        state: "uploading",
-        message: "Uploading files...",
-        progress: 0,
-      });
+      setUploadStatus({ state: "uploading", message: "Uploading files...", progress: 0 });
 
       let progress = 0;
       const progressInterval = setInterval(() => {
@@ -173,10 +117,8 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
     }
   };
 
-  const getStepStatus = (
-    step: "upload" | "process" | "embedding" | "storage"
-  ) => {
-    const completedSteps: Record<UploadStatus["state"], string[]> = {
+  const getStepStatus = (step) => {
+    const completedSteps = {
       idle: [],
       uploading: [],
       processing: ["upload"],
@@ -186,7 +128,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
       error: [],
     };
 
-    const activeStep: Record<UploadStatus["state"], string> = {
+    const activeStep = {
       idle: "",
       uploading: "upload",
       processing: "process",
@@ -242,24 +184,21 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
           }`}
         >
           <div className="flex items-center gap-2">
-            {["uploading", "processing", "embedding", "storing"].includes(
-              uploadStatus.state
-            ) && <Loader2 className="h-4 w-4 animate-spin" />}
-            {uploadStatus.state === "success" && (
-              <CheckCircle className="h-4 w-4" />
+            {["uploading", "processing", "embedding", "storing"].includes(uploadStatus.state) && (
+              <Loader2 className="h-4 w-4 animate-spin" />
             )}
+            {uploadStatus.state === "success" && <CheckCircle className="h-4 w-4" />}
             {uploadStatus.state === "error" && <XCircle className="h-4 w-4" />}
             <span>{uploadStatus.message}</span>
           </div>
-          {uploadStatus.state === "uploading" &&
-            uploadStatus.progress !== undefined && (
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                  style={{ width: `${uploadStatus.progress}%` }}
-                ></div>
-              </div>
-            )}
+          {uploadStatus.state === "uploading" && uploadStatus.progress !== undefined && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                style={{ width: `${uploadStatus.progress}%` }}
+              ></div>
+            </div>
+          )}
         </div>
       )}
 
@@ -287,64 +226,60 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
             }}
           ></div>
 
-          {(["upload", "process", "embedding", "storage"] as const).map(
-            (step, index) => {
-              const stepIcons = {
-                upload: <Upload className="w-5 h-5 text-gray-500" />,
-                process: (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-gray-600"
-                  >
-                    <path d="M12 3v3m0 12v3M9 3h6M9 21h6M5.5 8.5l1.5 1.25M18.5 15.5l-1.5-1.25M3 12h3m12 0h3M5.5 15.5l1.5-1.25M18.5 8.5l-1.5 1.25" />
-                  </svg>
-                ),
-                embedding: <Database className="w-5 h-5 text-gray-500" />,
-                storage: <HardDrive className="w-5 h-5 text-gray-500" />,
-              };
+          {["upload", "process", "embedding", "storage"].map((step, index) => {
+            const stepIcons = {
+              upload: <Upload className="w-5 h-5 text-gray-500" />,
+              process: (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-gray-600"
+                >
+                  <path d="M12 3v3m0 12v3M9 3h6M9 21h6M5.5 8.5l1.5 1.25M18.5 15.5l-1.5-1.25M3 12h3m12 0h3M5.5 15.5l1.5-1.25M18.5 8.5l-1.5 1.25" />
+                </svg>
+              ),
+              embedding: <Database className="w-5 h-5 text-gray-500" />,
+              storage: <HardDrive className="w-5 h-5 text-gray-500" />,
+            };
 
-              const status = getStepStatus(step);
+            const status = getStepStatus(step);
 
-              return (
-                <div className="flex flex-col items-center z-20" key={index}>
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                      status === "active"
-                        ? "bg-blue-500 text-white shadow-lg shadow-blue-300"
-                        : status === "completed"
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-100 border-2 border-gray-300"
-                    }`}
-                  >
-                    {status === "active" ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : status === "completed" ? (
-                      <Check className="w-5 h-5" />
-                    ) : (
-                      stepIcons[step]
-                    )}
-                  </div>
-                  <span
-                    className={`text-sm font-medium ${
-                      status !== "pending" ? "text-blue-600" : "text-gray-500"
-                    }`}
-                  >
-                    {step === "embedding"
-                      ? "Vector Embedding"
-                      : step.charAt(0).toUpperCase() + step.slice(1)}
-                  </span>
+            return (
+              <div className="flex flex-col items-center z-20" key={index}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                    status === "active"
+                      ? "bg-blue-500 text-white shadow-lg shadow-blue-300"
+                      : status === "completed"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 border-2 border-gray-300"
+                  }`}
+                >
+                  {status === "active" ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : status === "completed" ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    stepIcons[step]
+                  )}
                 </div>
-              );
-            }
-          )}
+                <span
+                  className={`text-sm font-medium ${
+                    status !== "pending" ? "text-blue-600" : "text-gray-500"
+                  }`}
+                >
+                  {step === "embedding" ? "Vector Embedding" : step.charAt(0).toUpperCase() + step.slice(1)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -352,7 +287,7 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
         type="file"
         ref={fileInputRef}
         accept=".pdf,.docx,.jpeg,.jpg,.png,.txt,.csv"
-        multiple // ✅ Enable multiple file input
+        multiple
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
         className="hidden"
       />

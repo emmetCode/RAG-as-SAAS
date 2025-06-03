@@ -1,36 +1,25 @@
 'use client';
 
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState } from "react";
 
-type Role = "NORMALUSER" | "ADMIN" | "COMPANYMEMBER";
-
-interface RegisterForm {
-  email: string;
-  username: string;
-  password: string;
-  role: Role;
-}
-
-const roles: { value: Role; label: string }[] = [
+const roles = [
   { value: "NORMALUSER", label: "Normal User" },
   { value: "COMPANYMEMBER", label: "Company Member" },
   { value: "ADMIN", label: "Admin" },
 ];
 
-const Register: React.FC = () => {
-  const [form, setForm] = useState<RegisterForm>({
+const Register = () => {
+  const [form, setForm] = useState({
     email: "",
     username: "",
     password: "",
     role: "NORMALUSER",
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -38,14 +27,14 @@ const Register: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setMessage(null);
 
     try {
-      console.log("Submitting register form:", form); // Debug log outgoing data
+      console.log("Submitting register form:", form);
 
       const res = await fetch("http://localhost:8001/api/v1/users/register", {
         method: "POST",
@@ -57,7 +46,7 @@ const Register: React.FC = () => {
 
       const data = await res.json();
 
-      console.log("Backend response:", data); // Debug backend response
+      console.log("Backend response:", data);
 
       if (!res.ok) {
         setError(data?.message || "Failed to register");
@@ -67,8 +56,7 @@ const Register: React.FC = () => {
         );
         setForm({ email: "", username: "", password: "", role: "NORMALUSER" });
       }
-    } catch  {
-   
+    } catch {
       setError("Something went wrong");
     } finally {
       setLoading(false);
@@ -121,12 +109,7 @@ const Register: React.FC = () => {
         <div>
           <label htmlFor="role">Role</label>
           <br />
-          <select
-            id="role"
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-          >
+          <select id="role" name="role" value={form.role} onChange={handleChange}>
             {roles.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}

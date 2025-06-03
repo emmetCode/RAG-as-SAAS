@@ -251,21 +251,11 @@ export default ChatComponent;
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import * as React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Copy } from "lucide-react";
 
-interface IMessage {
-  role: "assistant" | "user";
-  content?: string;
-  expanded?: boolean;
-}
-
-interface CopyButtonProps {
-  content: string;
-}
-
-const CopyButton: React.FC<CopyButtonProps> = ({ content }) => {
-  const [copied, setCopied] = React.useState(false);
+const CopyButton = ({ content }) => {
+  const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(content);
@@ -292,22 +282,22 @@ const CopyButton: React.FC<CopyButtonProps> = ({ content }) => {
   );
 };
 
-const ChatComponent: React.FC = () => {
-  const [message, setMessage] = React.useState<string>("");
-  const [messages, setMessages] = React.useState<IMessage[]>([]);
-  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
+const ChatComponent = () => {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   const handleSendChatMessage = async () => {
     if (!message.trim()) return;
-    const userMessage: IMessage = { role: "user", content: message };
+    const userMessage = { role: "user", content: message };
     setMessages((prev) => [...prev, userMessage]);
     setMessage("");
     try {
@@ -317,11 +307,11 @@ const ChatComponent: React.FC = () => {
         )}`,
         {
           method: "GET",
-          credentials: "include", // 👈 this sends the cookie (with JWT)
+          credentials: "include",
         }
       );
       const data = await res.json();
-      const assistantMessage: IMessage = {
+      const assistantMessage = {
         role: "assistant",
         content: data?.message,
         expanded: false,
@@ -335,7 +325,7 @@ const ChatComponent: React.FC = () => {
     }
   };
 
-  const toggleExpand = (index: number) => {
+  const toggleExpand = (index) => {
     setMessages((prev) =>
       prev.map((msg, i) =>
         i === index ? { ...msg, expanded: !msg.expanded } : msg
@@ -343,7 +333,7 @@ const ChatComponent: React.FC = () => {
     );
   };
 
-  const shouldShowExpand = (content?: string) => {
+  const shouldShowExpand = (content) => {
     if (!content) return false;
     const lines = content.split("\n");
     return lines.length > 5 || content.length > 500;

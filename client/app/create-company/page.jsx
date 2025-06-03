@@ -11,7 +11,7 @@ export default function CreateCompanyForm() {
   const [successMsg, setSuccessMsg] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
@@ -41,7 +41,7 @@ export default function CreateCompanyForm() {
 
       setSuccessMsg('Company created successfully!');
       router.push('/'); // 👈 Redirect to homepage instead of /dashboard
-    } catch  {
+    } catch {
       setError('Something went wrong');
     } finally {
       setLoading(false);
