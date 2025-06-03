@@ -152,9 +152,10 @@ const FileUploadComponent: React.FC<DocumentUploadProps> = ({
         setUploadStatus((prev) => ({ ...prev, progress }));
       }, 300);
 
-      const res = await fetch("http://localhost:8001/ap1/v1/uploads/pdf", {
+      const res = await fetch("http://localhost:8001/api/v1/uploads/pdf", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       clearInterval(progressInterval);

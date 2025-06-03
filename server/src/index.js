@@ -25,7 +25,7 @@ if (cluster.isPrimary) {
 } else {
   connectDB()
     .then(() => {
-      httpServer.listen(process.env.PORT || 5000, () => {
+      httpServer.listen(process.env.PORT || 8003, () => {
         logger.info("⚙️  Server is running on port: " + process.env.PORT);
       });
     })

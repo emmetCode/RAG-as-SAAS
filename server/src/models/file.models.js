@@ -7,6 +7,16 @@ const fileSchema = new mongoose.Schema(
         required: true,
       },
     ],
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      default: null,
+    },
   },
   { timestamps: true }
 );

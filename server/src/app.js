@@ -1,23 +1,35 @@
 import express from "express";
 import cors from "cors";
+import passport from "passport";
 import { rateLimit } from "express-rate-limit";
 import requestIp from "request-ip";
 import morganMiddleware from "./logger/morgan.logger.js";
 import helmet from "helmet";
+import session from "express-session";
 import { errorHandler } from "./middlewares/error.middlewares.js";
 import { ApiError } from "./utils/ApiError.js";
 import { createServer } from "http";
+import cookieParser from "cookie-parser";
 const app = express();
 const httpServer = createServer(app);
+const corsOptions = {
+  origin: process.env.ORIGIN,
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+// required for passport
 app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
+  session({
+    secret: process.env.EXPRESS_SESSION_SECRET,
+    resave: true,
+    saveUninitialized: true,
   })
-);
+); // session secret
+
 app.use(helmet());
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.static("uploads"));
 
 app.use(requestIp.mw());
@@ -41,6 +53,9 @@ const limiter = rateLimit({
     );
   },
 });
+app.use(cookieParser());
+app.use(passport.initialize());
+app.use(passport.session()); // persistent login sessions
 
 app.use(morganMiddleware);
 app.use(errorHandler);
@@ -48,9 +63,16 @@ app.use(errorHandler);
 //route import
 import pdfRouter from "./routes/pdf.routes.js";
 import chatRouter from "./routes/chat.routes.js";
-
+import userRouter from "./routes/user.routes.js";
+import companyRouter from "./routes/company.routes.js";
 //route declaration
-app.use("/ap1/v1/uploads", limiter, pdfRouter);
-app.use("/ap1/v1", chatRouter);
+app.use("/api/v1/uploads", limiter, pdfRouter);
+app.use("/api/v1", chatRouter);
+
+// for user routing
+app.use("/api/v1/users", userRouter);
+
+//for company routes
+app.use("/api/v1/company", limiter, companyRouter);
 
 export { httpServer };
