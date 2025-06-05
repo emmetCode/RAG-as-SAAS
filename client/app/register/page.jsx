@@ -63,6 +63,10 @@ const Register = () => {
     }
   };
 
+  const handleGoogleSignup = () => {
+    window.location.href = "http://localhost:8001/api/v1/users/google";
+  };
+
   return (
     <div style={{ maxWidth: 400, margin: "auto", padding: 20 }}>
       <h2>Register</h2>
@@ -122,6 +126,33 @@ const Register = () => {
           {loading ? "Registering..." : "Register"}
         </button>
       </form>
+
+      <br />
+      <hr />
+      <p style={{ textAlign: "center", margin: "1rem 0" }}>or</p>
+
+      <button
+        onClick={handleGoogleSignup}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
+          padding: "10px",
+          width: "100%",
+          backgroundColor: "#fff",
+          border: "1px solid #ddd",
+          borderRadius: "4px",
+          cursor: "pointer",
+        }}
+      >
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+          alt="Google"
+          style={{ width: "20px", height: "20px" }}
+        />
+        Sign up with Google
+      </button>
 
       {message && <p style={{ color: "green" }}>{message}</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
