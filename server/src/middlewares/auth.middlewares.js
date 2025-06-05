@@ -28,14 +28,18 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       email: user.email,
       username: user.username,
       role: user.role,
-      companyId: user.companyId, 
+      companyId: user.companyId,
     };
 
     next();
   } catch (error) {
     // Client should make a request to /api/v1/users/refresh-token if they have refreshToken present in their cookie
     // Then they will get a new access token which will allow them to refresh the access token without logging out the user
-    throw new ApiError(401, error?.message || "Invalid access token");
+    if (error.name === "TokenExpiredError") {
+      throw new ApiError(401, "Your session has expired. Please log in again.");
+    } else {
+      throw new ApiError(401, error?.message || "Invalid access token");
+    }
   }
 });
 

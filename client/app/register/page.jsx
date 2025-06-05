@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
 
@@ -113,7 +113,12 @@ const Register = () => {
         <div>
           <label htmlFor="role">Role</label>
           <br />
-          <select id="role" name="role" value={form.role} onChange={handleChange}>
+          <select
+            id="role"
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+          >
             {roles.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}
@@ -144,10 +149,13 @@ const Register = () => {
           border: "1px solid #ddd",
           borderRadius: "4px",
           cursor: "pointer",
+          color: "#202124", // dark text color
+          fontSize: "16px", // clear font size
+          fontWeight: "500", // medium bold
         }}
       >
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+          src="/g-logo.png"
           alt="Google"
           style={{ width: "20px", height: "20px" }}
         />

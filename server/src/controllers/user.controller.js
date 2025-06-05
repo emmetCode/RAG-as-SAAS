@@ -61,9 +61,8 @@ const registerUser = asyncHandler(async (req, res) => {
   } else if (role === UserRolesEnum.COMPANYADMIN) {
     // Create a new company for the admin user
     const newCompany = await COMPANY.create({
-      name: `${username}'s Company`, // You can customize this or take from req.body
+      name: `${username}'s Company`,
       allowedEmails: [email.toLowerCase()],
-      // Add other company fields as needed
     });
     companyId = newCompany._id;
   }

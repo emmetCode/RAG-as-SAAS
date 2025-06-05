@@ -1,7 +1,15 @@
-'use client';
+"use client";
 import React from "react";
 
-import { Upload, Loader2, CheckCircle, XCircle, Check, Database, HardDrive } from "lucide-react";
+import {
+  Upload,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Check,
+  Database,
+  HardDrive,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const FileUploadComponent = ({ onUploadSuccess }) => {
@@ -34,11 +42,35 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
   };
 
   const simulateProcessingSteps = () => {
-    setTimeout(() => setUploadStatus({ state: "processing", message: "Processing document..." }), 1000);
-    setTimeout(() => setUploadStatus({ state: "embedding", message: "Creating vector embeddings..." }), 2400);
-    setTimeout(() => setUploadStatus({ state: "storing", message: "Storing in database..." }), 3800);
+    setTimeout(
+      () =>
+        setUploadStatus({
+          state: "processing",
+          message: "Processing document...",
+        }),
+      1000
+    );
+    setTimeout(
+      () =>
+        setUploadStatus({
+          state: "embedding",
+          message: "Creating vector embeddings...",
+        }),
+      2400
+    );
+    setTimeout(
+      () =>
+        setUploadStatus({
+          state: "storing",
+          message: "Storing in database...",
+        }),
+      3800
+    );
     setTimeout(() => {
-      setUploadStatus({ state: "success", message: "Document uploaded successfully!" });
+      setUploadStatus({
+        state: "success",
+        message: "Document uploaded successfully!",
+      });
       onUploadSuccess?.();
       setTimeout(() => setUploadStatus({ state: "idle" }), 1300);
     }, 5200);
@@ -55,6 +87,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       "image/png",
       "text/plain",
       "text/csv",
+      "image/jpg",
     ];
 
     const formData = new FormData();
@@ -63,7 +96,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       if (!supportedTypes.includes(file.type)) {
         setUploadStatus({
           state: "error",
-          message: "Supported formats: PDF, DOCX, JPEG, PNG, TXT",
+          message: "Supported formats: PDF, DOCX, JPEG, PNG, TXT, JPG",
         });
         return;
       }
@@ -84,7 +117,11 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
     }
 
     try {
-      setUploadStatus({ state: "uploading", message: "Uploading files...", progress: 0 });
+      setUploadStatus({
+        state: "uploading",
+        message: "Uploading files...",
+        progress: 0,
+      });
 
       let progress = 0;
       const progressInterval = setInterval(() => {
@@ -104,7 +141,20 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
 
       clearInterval(progressInterval);
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        let errorMessage = "Failed to upload documents";
+        try {
+          const errorData = await res.json();
+          if (errorData.message) errorMessage = errorData.message;
+        } catch {
+          try {
+            errorMessage = await res.text();
+          } catch {
+            // fallback to default message
+          }
+        }
+        throw new Error(errorMessage);
+      }
 
       setDocumentTitle("");
       simulateProcessingSteps();
@@ -112,7 +162,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       console.error("Upload error:", error);
       setUploadStatus({
         state: "error",
-        message: "Failed to upload documents",
+        message: error.message || "Failed to upload documents",
       });
     }
   };
@@ -184,21 +234,24 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
           }`}
         >
           <div className="flex items-center gap-2">
-            {["uploading", "processing", "embedding", "storing"].includes(uploadStatus.state) && (
-              <Loader2 className="h-4 w-4 animate-spin" />
+            {["uploading", "processing", "embedding", "storing"].includes(
+              uploadStatus.state
+            ) && <Loader2 className="h-4 w-4 animate-spin" />}
+            {uploadStatus.state === "success" && (
+              <CheckCircle className="h-4 w-4" />
             )}
-            {uploadStatus.state === "success" && <CheckCircle className="h-4 w-4" />}
             {uploadStatus.state === "error" && <XCircle className="h-4 w-4" />}
             <span>{uploadStatus.message}</span>
           </div>
-          {uploadStatus.state === "uploading" && uploadStatus.progress !== undefined && (
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${uploadStatus.progress}%` }}
-              ></div>
-            </div>
-          )}
+          {uploadStatus.state === "uploading" &&
+            uploadStatus.progress !== undefined && (
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${uploadStatus.progress}%` }}
+                ></div>
+              </div>
+            )}
         </div>
       )}
 
@@ -275,7 +328,9 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
                     status !== "pending" ? "text-blue-600" : "text-gray-500"
                   }`}
                 >
-                  {step === "embedding" ? "Vector Embedding" : step.charAt(0).toUpperCase() + step.slice(1)}
+                  {step === "embedding"
+                    ? "Vector Embedding"
+                    : step.charAt(0).toUpperCase() + step.slice(1)}
                 </span>
               </div>
             );
@@ -286,7 +341,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       <input
         type="file"
         ref={fileInputRef}
-        accept=".pdf,.docx,.jpeg,.jpg,.png,.txt,.csv"
+        accept=".pdf,.docx,.jpeg,.jpg,.png,.txt,.csv,.jpg"
         multiple
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
         className="hidden"
