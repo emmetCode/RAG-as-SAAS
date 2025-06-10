@@ -10,6 +10,7 @@ import { errorHandler } from "./middlewares/error.middlewares.js";
 import { ApiError } from "./utils/ApiError.js";
 import { createServer } from "http";
 import cookieParser from "cookie-parser";
+
 const app = express();
 const httpServer = createServer(app);
 const corsOptions = {
@@ -24,10 +25,12 @@ app.use(
     secret: process.env.EXPRESS_SESSION_SECRET,
     resave: true,
     saveUninitialized: true,
+    name: 'blackrock',
   })
 ); // session secret
 
 app.use(helmet());
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.static("uploads"));
@@ -70,7 +73,7 @@ app.use("/api/v1/uploads", limiter, pdfRouter);
 app.use("/api/v1", chatRouter);
 
 // for user routing
-app.use("/api/v1/users", userRouter);
+app.use("/api/v1/users", limiter, userRouter);
 
 //for company routes
 app.use("/api/v1/company", limiter, companyRouter);
