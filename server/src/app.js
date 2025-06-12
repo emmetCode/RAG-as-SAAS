@@ -25,7 +25,7 @@ app.use(
     secret: process.env.EXPRESS_SESSION_SECRET,
     resave: true,
     saveUninitialized: true,
-    name: 'blackrock',
+    name: "dareifyoucanstole",
   })
 ); // session secret
 
