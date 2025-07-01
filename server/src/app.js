@@ -68,6 +68,7 @@ import pdfRouter from "./routes/pdf.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import userRouter from "./routes/user.routes.js";
 import companyRouter from "./routes/company.routes.js";
+import companyAdminEmail from "./routes/superadmin.routes.js"
 //route declaration
 app.use("/api/v1/uploads", limiter, pdfRouter);
 app.use("/api/v1", chatRouter);
@@ -76,6 +77,9 @@ app.use("/api/v1", chatRouter);
 app.use("/api/v1/users", limiter, userRouter);
 
 //for company routes
+
+
 app.use("/api/v1/company", limiter, companyRouter);
+app.use("/api/v1", limiter, companyAdminEmail)
 
 export { httpServer };

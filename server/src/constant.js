@@ -4,10 +4,10 @@ export const UserRolesEnum = {
   ADMIN: "ADMIN",
   COMPANYMEMBER: "COMPANYMEMBER",
   NORMALUSER: "NORMALUSER",
+  SUPERADMIN: "SUPERADMIN",
 };
 
 export const AvailableUserRoles = Object.values(UserRolesEnum);
-
 
 export const UserLoginType = {
   GOOGLE: "GOOGLE",

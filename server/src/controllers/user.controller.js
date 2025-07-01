@@ -6,11 +6,19 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { COMPANY } from "../models/company.models.js";
+import { AllowedCompanyAdmin } from "../models/superadmin.models.js";
 import {
   emailVerificationMailgenContent,
   forgotPasswordMailgenContent,
   sendEmail,
 } from "../utils/mail.js";
+
+const isSuperAdmin = (email) => {
+  const allowedEmails = process.env.SUPERADMIN_EMAILS.split(",").map((e) =>
+    e.trim().toLowerCase()
+  );
+  return allowedEmails.includes(email.toLowerCase());
+};
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -58,16 +66,23 @@ const registerUser = asyncHandler(async (req, res) => {
       );
     }
     companyId = existingCompany._id;
-  } else if (role === UserRolesEnum.COMPANYADMIN) {
-    // Create a new company for the admin user
-    const newCompany = await COMPANY.create({
-      name: `${username}'s Company`,
-      allowedEmails: [email.toLowerCase()],
-    });
-    companyId = newCompany._id;
+  }
+  if (role === UserRolesEnum.SUPERADMIN) {
+    // Only emails in .env SUPERADMIN_EMAILS can register as superadmin
+    if (!isSuperAdmin(email)) {
+      throw new ApiError(403, "Unauthorized to register as superadmin");
+    }
+  } else if (role === UserRolesEnum.ADMIN) {
+    // Company admins must be pre-approved emails in AllowedCompanyAdmin collection
+    const allowedAdmin = await AllowedCompanyAdmin.findOne({ email });
+    if (!allowedAdmin) {
+      throw new ApiError(
+        403,
+        "Email is not allowed to register as company admin. Contact your superadmin."
+      );
+    }
   }
 
-  // Create the user
   const user = await User.create({
     email,
     password,

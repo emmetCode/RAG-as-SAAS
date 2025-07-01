@@ -78,7 +78,7 @@ const worker = new Worker(
     });
 
     logger.info(
-      `✅ ${originalFilename || "Document"} added to vector store in collection ${collectionName}`
+      ` ${originalFilename || "Document"} added to vector store in collection ${collectionName}`
     );
   },
   {
@@ -91,18 +91,18 @@ const worker = new Worker(
 
 // Event handlers
 worker.on("completed", (job) => {
-  logger.info(`🎉 Job ${job.id} completed successfully`);
+  logger.info(` Job ${job.id} completed successfully`);
 });
 
 worker.on("failed", (job, err) => {
-  logger.error(`🔥 Job ${job.id} failed: ${err.message}`, {
+  logger.error(` Job ${job.id} failed: ${err.message}`, {
     stack: err.stack,
   });
 });
 
 // Graceful shutdown
 const shutdown = async () => {
-  logger.info("🛑 Shutting down worker...");
+  logger.info("Shutting down worker...");
   await worker.close();
   process.exit(0);
 };
