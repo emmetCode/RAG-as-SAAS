@@ -1,22 +1,22 @@
 "use client";
-import React from "react";
-
+import { Button } from "@/components/ui/button";
 import {
   Upload,
   Loader2,
   CheckCircle,
   XCircle,
-  Check,
-  Database,
   HardDrive,
+  Database,
+  Check,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useRef } from "react";
+import "./FileUploadComponent.css";
 
 const FileUploadComponent = ({ onUploadSuccess }) => {
-  const [dragActive, setDragActive] = React.useState(false);
-  const [documentTitle, setDocumentTitle] = React.useState("");
-  const [uploadStatus, setUploadStatus] = React.useState({ state: "idle" });
-  const fileInputRef = React.useRef(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [documentTitle, setDocumentTitle] = useState("");
+  const [uploadStatus, setUploadStatus] = useState({ state: "idle" });
+  const fileInputRef = useRef(null);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -87,7 +87,6 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       "image/png",
       "text/plain",
       "text/csv",
-      "image/jpg",
     ];
 
     const formData = new FormData();
@@ -96,7 +95,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       if (!supportedTypes.includes(file.type)) {
         setUploadStatus({
           state: "error",
-          message: "Supported formats: PDF, DOCX, JPEG, PNG, TXT, JPG",
+          message: "Supported formats: PDF, DOCX, JPEG, PNG,TXT",
         });
         return;
       }
@@ -133,28 +132,14 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
         setUploadStatus((prev) => ({ ...prev, progress }));
       }, 300);
 
-      const res = await fetch("http://localhost:8001/api/v1/uploads/pdf", {
+      const res = await fetch("http://localhost:8001/ap1/v1/uploads/pdf", {
         method: "POST",
         body: formData,
-        credentials: "include",
       });
 
       clearInterval(progressInterval);
 
-      if (!res.ok) {
-        let errorMessage = "Failed to upload documents";
-        try {
-          const errorData = await res.json();
-          if (errorData.message) errorMessage = errorData.message;
-        } catch {
-          try {
-            errorMessage = await res.text();
-          } catch {
-            // fallback to default message
-          }
-        }
-        throw new Error(errorMessage);
-      }
+      if (!res.ok) throw new Error(await res.text());
 
       setDocumentTitle("");
       simulateProcessingSteps();
@@ -162,7 +147,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       console.error("Upload error:", error);
       setUploadStatus({
         state: "error",
-        message: error.message || "Failed to upload documents",
+        message: "Failed to upload documents",
       });
     }
   };
@@ -202,7 +187,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
 
       <div
         className={`border-2 border-dashed rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer ${
-          dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+          dragActive ? "border-blue-500 bg-blue-50" : "border-gray-700"
         }`}
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
@@ -216,7 +201,9 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
         <p className="text-gray-600 text-center mb-4">
           Drag and drop your files here, or click to browse
         </p>
-        <Button variant="outline">Browse Files</Button>
+        <Button className="browsebtn" variant="outline">
+          Browse Files
+        </Button>
       </div>
 
       <p className="text-sm text-gray-500">
@@ -255,10 +242,17 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
         </div>
       )}
 
-      <div className="mt-6">
+      <div className="mt-6 ">
         <h3 className="font-medium mb-4">Document Processing Pipeline</h3>
         <div className="flex items-center justify-between relative">
-          <div className="absolute h-[2px] bg-gray-200 top-1/2 left-0 right-0 -translate-y-1/2 z-0"></div>
+          <div
+            className="absolute h-[2px] bg-gray-200 top-6 left-0 right-0 -translate-y-1/2 z-0 "
+            style={{
+              width: "90%",
+              left: "20px",
+              maxWidth: "390px",
+            }}
+          ></div>
           <div
             className="absolute h-[2px] bg-blue-500 top-1/2 left-0 -translate-y-1/2 z-10 transition-all duration-500"
             style={{
@@ -326,10 +320,10 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
                 <span
                   className={`text-sm font-medium ${
                     status !== "pending" ? "text-blue-600" : "text-gray-500"
-                  }`}
+                  } hidden md:inline`}
                 >
                   {step === "embedding"
-                    ? "Vector Embedding"
+                    ? "Embedding"
                     : step.charAt(0).toUpperCase() + step.slice(1)}
                 </span>
               </div>
@@ -341,7 +335,7 @@ const FileUploadComponent = ({ onUploadSuccess }) => {
       <input
         type="file"
         ref={fileInputRef}
-        accept=".pdf,.docx,.jpeg,.jpg,.png,.txt,.csv,.jpg"
+        accept=".pdf,.docx,.jpeg,.jpg,.png,.txt,.csv"
         multiple
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
         className="hidden"

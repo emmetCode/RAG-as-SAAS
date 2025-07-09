@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import "./Register.css";
 
 const roles = [
   { value: "NORMALUSER", label: "Normal User" },
@@ -68,102 +69,109 @@ const Register = () => {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "auto", padding: 20 }}>
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Email</label>
-          <br />
-          <input
-            id="email"
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            required
-            autoComplete="email"
-          />
-        </div>
-        <div>
-          <label htmlFor="username">Username</label>
-          <br />
-          <input
-            id="username"
-            type="text"
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-            required
-            autoComplete="username"
-          />
-        </div>
-        <div>
-          <label htmlFor="password">Password</label>
-          <br />
-          <input
-            id="password"
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            autoComplete="new-password"
-          />
-        </div>
-        <div>
-          <label htmlFor="role">Role</label>
-          <br />
-          <select
-            id="role"
-            name="role"
-            value={form.role}
-            onChange={handleChange}
+    <div className="register-container">
+      <div className="register-card">
+        <h2 className="register-title">Create Account</h2>
+
+        <form onSubmit={handleSubmit} className="register-form">
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              autoComplete="email"
+              className="form-input"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="username" className="form-label">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              required
+              autoComplete="username"
+              className="form-input"
+              placeholder="Choose a username"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              autoComplete="new-password"
+              className="form-input"
+              placeholder="Create a password"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="role" className="form-label">
+              Account Type
+            </label>
+            <select
+              id="role"
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className="form-select"
+            >
+              {roles.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`submit-button ${loading ? "loading" : ""}`}
           >
-            {roles.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
+            {loading ? "Creating Account..." : "Create Account"}
+          </button>
+        </form>
+
+        <div className="divider">
+          <hr className="divider-line" />
+          <span className="divider-text">or</span>
+          <hr className="divider-line" />
         </div>
-        <br />
-        <button type="submit" disabled={loading}>
-          {loading ? "Registering..." : "Register"}
+
+        <button
+          onClick={handleGoogleSignup}
+          className="google-button"
+          type="button"
+        >
+          <img src="/g-logo.png" alt="Google" className="google-icon" />
+          Sign up with Google
         </button>
-      </form>
 
-      <br />
-      <hr />
-      <p style={{ textAlign: "center", margin: "1rem 0" }}>or</p>
+        {message && <div className="message success-message">{message}</div>}
 
-      <button
-        onClick={handleGoogleSignup}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-          padding: "10px",
-          width: "100%",
-          backgroundColor: "#fff",
-          border: "1px solid #ddd",
-          borderRadius: "4px",
-          cursor: "pointer",
-          color: "#202124", // dark text color
-          fontSize: "16px", // clear font size
-          fontWeight: "500", // medium bold
-        }}
-      >
-        <img
-          src="/g-logo.png"
-          alt="Google"
-          style={{ width: "20px", height: "20px" }}
-        />
-        Sign up with Google
-      </button>
-
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <div className="message error-message">{error}</div>}
+      </div>
     </div>
   );
 };

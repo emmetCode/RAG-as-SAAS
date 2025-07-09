@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import "./LoginPage.css";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LoginPage() {
   });
 
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -23,6 +25,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     try {
       const { identifier, password } = formData;
@@ -61,50 +64,92 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:8001/api/v1/users/google";
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-2xl shadow-md w-full max-w-sm"
-      >
-        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+    <div className="login-container">
+      <div className="login-card">
+        <h2 className="login-title">Welcome Back</h2>
+        <p className="login-subtitle">Sign in to your account</p>
 
-        <label className="block mb-2 text-sm font-medium text-gray-700">
-          Email or Username
-        </label>
-        <input
-          type="text"
-          name="identifier"
-          value={formData.identifier}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring focus:ring-blue-400 mb-4"
-        />
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label htmlFor="identifier" className="form-label">
+              Email or Username
+            </label>
+            <input
+              id="identifier"
+              type="text"
+              name="identifier"
+              value={formData.identifier}
+              onChange={handleChange}
+              required
+              className="form-input"
+              placeholder="Enter your email or username"
+            />
+          </div>
 
-        <label className="block mb-2 text-sm font-medium text-gray-700">
-          Password
-        </label>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring focus:ring-blue-400 mb-4"
-        />
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="form-input"
+              placeholder="Enter your password"
+            />
+          </div>
 
-        {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`submit-button ${loading ? "loading" : ""}`}
+          >
+            {loading ? "Signing In..." : "Sign In"}
+          </button>
+        </form>
+
+        <div className="divider">
+          <hr className="divider-line" />
+          <span className="divider-text">or</span>
+          <hr className="divider-line" />
+        </div>
 
         <button
-          type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl"
+          onClick={handleGoogleLogin}
+          className="google-button"
+          type="button"
         >
-          Log In
+          <img src="/g-logo.png" alt="Google" className="google-icon" />
+          Sign in with Google
         </button>
-      </form>
+
+        <div className="login-footer">
+          <p className="footer-text">
+            Don't have an account?{" "}
+            <a href="/register" className="footer-link">
+              Sign up
+            </a>
+          </p>
+          <a href="/forgot-password" className="forgot-password-link">
+            Forgot your password?
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

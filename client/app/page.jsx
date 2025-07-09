@@ -1,10 +1,19 @@
-'use client';
-import FileUploadComponent from './components/file-upload';
-import ChatComponent from './components/chat';
+"use client";
+
+import { useEffect } from "react";
+import FileUploadComponent from "./components/file-upload";
+import ChatComponent from "./components/chat";
 
 export default function Home() {
+  // Reset scroll position when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
+
   return (
-    <div className="overflow-x-hidden">
+    <div className="overflow-y-hidden">
       <div className="min-h-screen w-full flex flex-col md:flex-row p-4">
         <div className="flex-1 basis-full md:basis-1/3 min-w-0 min-h-[40vh] md:min-h-screen p-2 flex justify-center items-center">
           <FileUploadComponent />

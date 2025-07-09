@@ -43,9 +43,21 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+body {
+  background-image: var(--background-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh; /* ensures it takes at least full screen */
+  height: 100%; /* supports layout consistency */
+  width: 100%;
+  color: black;
+}
+
 :root {
+  --background-image: url("/emmVision.png");
   --radius: 0.625rem;
-  --background: #1e293b;  /* Tailwind's slate-800 */
+  --background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
   --foreground: oklch(0.95 0.01 250);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
@@ -79,7 +91,11 @@
 }
 
 .dark {
-  --background: #1e293b; /* Tailwind's slate-800 */
+  --background: linear-gradient(
+    135deg,
+    #8b5cf6 0%,
+    #ec4899 100%
+  ); /* Tailwind's slate-800 */
   --foreground: oklch(0.95 0.01 250);
   --card: oklch(0.208 0.042 265.755);
   --card-foreground: oklch(0.984 0.003 247.858);
