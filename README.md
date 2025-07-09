@@ -63,7 +63,7 @@ To run the Rag-pdf project locally:
 
 2. **Clone the project repository**:
    ```bash
-   git clone AnjanG7/RGF-APP
+   git clone emmetCode/RAG-as-SAAS
 
    ```
 
